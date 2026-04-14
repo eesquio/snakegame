@@ -2,9 +2,11 @@
     --bg-color: #050508;
     --primary-color: #00f2ff;
     --secondary-color: #ff007a;
+    --tertiary-color: #7000ff;
+    --accent-color: #00ff88;
     --text-color: #ffffff;
-    --panel-bg: rgba(255, 255, 255, 0.05);
-    --panel-border: rgba(255, 255, 255, 0.1);
+    --panel-bg: rgba(5, 5, 8, 0.7);
+    --panel-border: rgba(0, 242, 255, 0.2);
     --font-family: 'Outfit', sans-serif;
 }
 
@@ -26,61 +28,61 @@ body {
     position: relative;
 }
 
-/* Animated Background Blobs */
+/* Animated Background Blobs - Cyberpunk Style */
 .background-blobs {
     position: absolute;
     width: 100%;
     height: 100%;
     z-index: -1;
     overflow: hidden;
-    filter: blur(80px);
+    filter: blur(100px);
 }
 
 .blob {
     position: absolute;
     border-radius: 50%;
-    opacity: 0.4;
-    animation: move 20s infinite alternate;
+    opacity: 0.3;
+    animation: move 25s infinite alternate;
 }
 
 .blob-1 {
-    width: 400px;
-    height: 400px;
+    width: 500px;
+    height: 500px;
     background: var(--primary-color);
-    top: -100px;
-    left: -100px;
+    top: -150px;
+    left: -150px;
 }
 
 .blob-2 {
-    width: 350px;
-    height: 350px;
+    width: 450px;
+    height: 450px;
     background: var(--secondary-color);
-    bottom: -50px;
-    right: -50px;
-    animation-delay: -5s;
+    bottom: -100px;
+    right: -100px;
+    animation-delay: -8s;
 }
 
 .blob-3 {
-    width: 300px;
-    height: 300px;
-    background: #7000ff;
-    top: 40%;
-    left: 60%;
-    animation-delay: -10s;
+    width: 400px;
+    height: 400px;
+    background: var(--tertiary-color);
+    top: 30%;
+    left: 50%;
+    animation-delay: -15s;
 }
 
 @keyframes move {
     from { transform: translate(0, 0) scale(1); }
-    to { transform: translate(100px, 50px) scale(1.1); }
+    to { transform: translate(120px, 80px) scale(1.2); }
 }
 
 /* Game Container */
 .game-container {
-    width: 90%;
-    max-width: 600px;
+    width: 95%;
+    max-width: 900px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
     z-index: 1;
 }
 
@@ -88,53 +90,93 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 0;
+    padding: 20px 0;
+    border-bottom: 2px solid var(--panel-border);
+    padding-bottom: 15px;
 }
 
 .logo {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 800;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+    animation: glow-pulse 2s ease-in-out infinite;
 }
 
 .logo span {
-    color: var(--primary-color);
-    text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+    color: var(--secondary-color);
+    text-shadow: 0 0 15px rgba(255, 0, 122, 0.5);
+}
+
+@keyframes glow-pulse {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.4)); }
+    50% { filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.8)); }
 }
 
 .score-board {
     display: flex;
-    gap: 20px;
+    gap: 30px;
 }
 
 .score-item {
     text-align: right;
+    padding: 10px 15px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: rgba(0, 242, 255, 0.05);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.score-item:hover {
+    border-color: var(--primary-color);
+    background: rgba(0, 242, 255, 0.1);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
 }
 
 .score-item .label {
     display: block;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
-    letter-spacing: 1px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
 }
 
 .score-item .value {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
+    color: var(--primary-color);
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
 }
 
 /* Canvas Area */
 .canvas-wrapper {
     position: relative;
     background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    border-radius: 20px;
+    border: 2px solid var(--panel-border);
+    border-radius: 15px;
     overflow: hidden;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(15px);
+    box-shadow: 
+        0 0 40px rgba(0, 242, 255, 0.15),
+        inset 0 0 40px rgba(0, 242, 255, 0.05),
+        0 20px 60px rgba(0, 0, 0, 0.8);
     aspect-ratio: 1/1;
+    transition: all 0.3s ease;
+}
+
+.canvas-wrapper:hover {
+    border-color: var(--primary-color);
+    box-shadow: 
+        0 0 60px rgba(0, 242, 255, 0.25),
+        inset 0 0 40px rgba(0, 242, 255, 0.1),
+        0 20px 80px rgba(0, 0, 0, 0.9);
 }
 
 canvas {
@@ -149,8 +191,8 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(112, 0, 255, 0.1));
+    backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -165,71 +207,135 @@ canvas {
 
 .overlay-content {
     text-align: center;
-    padding: 20px;
+    padding: 40px;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    background: rgba(5, 5, 8, 0.9);
+    box-shadow: 
+        0 0 40px rgba(0, 242, 255, 0.3),
+        inset 0 0 30px rgba(0, 242, 255, 0.05);
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .overlay h1 {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 800;
-    margin-bottom: 10px;
-    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+    letter-spacing: 2px;
 }
 
 .overlay p {
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 30px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 35px;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
 }
 
 button {
-    background: var(--text-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
     color: var(--bg-color);
-    border: none;
-    padding: 15px 40px;
+    border: 2px solid var(--primary-color);
+    padding: 15px 50px;
     font-family: inherit;
     font-weight: 800;
     border-radius: 50px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    font-size: 1rem;
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
 }
 
 button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    transform: scale(1.08);
+    box-shadow: 
+        0 0 30px rgba(0, 242, 255, 0.6),
+        0 0 60px rgba(0, 255, 136, 0.3);
+    border-color: var(--accent-color);
 }
 
 button:active {
-    transform: scale(0.98);
+    transform: scale(0.96);
 }
 
 /* Footer & Hints */
 footer {
     text-align: center;
+    padding-top: 15px;
+    border-top: 1px solid var(--panel-border);
 }
 
 .controls-hint {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
     font-weight: 300;
+    letter-spacing: 0.5px;
 }
 
 .controls-hint span {
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: 600;
-    padding: 2px 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-    margin: 0 3px;
+    color: var(--primary-color);
+    font-weight: 700;
+    padding: 4px 10px;
+    background: rgba(0, 242, 255, 0.1);
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    border-radius: 6px;
+    margin: 0 5px;
+    display: inline-block;
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
 }
 
 /* Responsive adjustments */
-@media (max-height: 700px) {
+@media (max-height: 800px) {
     .game-container {
-        gap: 10px;
-        max-width: 450px;
+        gap: 15px;
+        max-width: 700px;
     }
-    .overlay h1 { font-size: 2rem; }
+    
+    .logo {
+        font-size: 1.5rem;
+    }
+    
+    .overlay h1 {
+        font-size: 2.5rem;
+    }
+    
+    .score-board {
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .game-container {
+        max-width: 95%;
+    }
+    
+    .logo {
+        font-size: 1.5rem;
+    }
+    
+    header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .score-board {
+        width: 100%;
+        justify-content: center;
+    }
 }
