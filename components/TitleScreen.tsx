@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Play, Sparkles, MousePointer, Shield, Sliders, Trophy, User } from 'lucide-react';
+import { Play, Sparkles, MousePointer, Shield, Sliders, Trophy, User, HelpCircle } from 'lucide-react';
 import { GameSettings } from '@/lib/types';
 import { SNAKE_THEMES } from '@/lib/themes';
 import { useIsMounted } from '@/hooks/use-local-storage';
@@ -13,6 +13,7 @@ interface TitleScreenProps {
   onOpenSettings: () => void;
   onOpenLeaderboard: () => void;
   onOpenNicknameModal: () => void;
+  onOpenInstructions: () => void;
   highScore: number;
 }
 
@@ -23,6 +24,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onOpenSettings,
   onOpenLeaderboard,
   onOpenNicknameModal,
+  onOpenInstructions,
   highScore,
 }) => {
   const isMounted = useIsMounted();
@@ -98,21 +100,29 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             <span>Iniciar Partida</span>
           </button>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={onOpenLeaderboard}
-              className="py-2.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 border border-amber-500/30 transition-colors cursor-pointer"
+              className="py-2.5 px-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 border border-amber-500/30 transition-colors cursor-pointer"
             >
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span>Tabela Global</span>
+              <span>Ranking</span>
+            </button>
+
+            <button
+              onClick={onOpenInstructions}
+              className="py-2.5 px-2 bg-slate-800/70 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 border border-slate-700/60 transition-colors cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Como Jogar</span>
             </button>
 
             <button
               onClick={onOpenSettings}
-              className="py-2.5 px-3 bg-slate-800/70 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 border border-slate-700/60 transition-colors cursor-pointer"
+              className="py-2.5 px-2 bg-slate-800/70 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 border border-slate-700/60 transition-colors cursor-pointer"
             >
               <Sliders className="w-3.5 h-3.5" />
-              <span>Configurações</span>
+              <span>Ajustes</span>
             </button>
           </div>
         </div>

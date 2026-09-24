@@ -6,20 +6,21 @@ import { GameHUD } from '@/components/GameHUD';
 import { GameOverModal } from '@/components/GameOverModal';
 import { PauseOverlay } from '@/components/PauseOverlay';
 import { TitleScreen } from '@/components/TitleScreen';
+import { GameInstructions } from '@/components/GameInstructions';
 import { SettingsModal } from '@/components/SettingsModal';
 import { NicknameModal } from '@/components/NicknameModal';
 import { LeaderboardModal } from '@/components/LeaderboardModal';
-import { GameInstructions } from '@/components/GameInstructions';
-import { GameState, GameStats, GameSettings } from '@/lib/types';
+import { InstructionsModal } from '@/components/InstructionsModal';
+import { GameState, GameStats } from '@/lib/types';
 import {
   useHighScore,
   useGameSettings,
   usePlayerNickname,
 } from '@/hooks/use-local-storage';
 import { ensureAnonymousAuth, submitPlayerScore } from '@/lib/firebase';
-import { Sparkles, Terminal, Trophy } from 'lucide-react';
+import { Sparkles, Trophy } from 'lucide-react';
 
-const APP_VERSION = 'v1.2.0';
+const APP_VERSION = 'v1.3.2';
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState>('TITLE');
@@ -35,6 +36,7 @@ export default function Home() {
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState<boolean>(false);
   const [isFirstTimeNickname, setIsFirstTimeNickname] = useState<boolean>(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
+  const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
 
   // Firebase auth & global score state
   const [currentUserId, setCurrentUserId] = useState<string>('');
@@ -70,14 +72,13 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-
   const handleSaveNickname = (newNick: string) => {
     setNickname(newNick);
     setIsNicknameModalOpen(false);
   };
 
+  // Start game: automatically expands the game screen to full browser window
   const handleStartGame = () => {
-    // If player has never set a nickname, prompt once before starting
     if (!nickname) {
       setIsFirstTimeNickname(true);
       setIsNicknameModalOpen(true);
@@ -97,6 +98,10 @@ export default function Home() {
   const handleRestart = () => {
     setGlobalSubmissionResult(null);
     setGameState('PLAYING');
+  };
+
+  const handleGoToTitle = () => {
+    setGameState('TITLE');
   };
 
   const handleGameOver = useCallback(
@@ -147,16 +152,20 @@ export default function Home() {
 
   const handleToggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(() => {});
+      document.documentElement.requestFullscreen().catch(() => {});
     } else {
       document.exitFullscreen().catch(() => {});
     }
   };
 
-  // Keyboard shortcut listener for Esc (Pause/Modals) and R (Restart)
+  // Keyboard shortcut listener for Esc (Pause/Modals), R (Restart), F (Fullscreen)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (isInstructionsOpen) {
+          setIsInstructionsOpen(false);
+          return;
+        }
         if (isNicknameModalOpen) {
           setIsNicknameModalOpen(false);
           return;
@@ -178,162 +187,238 @@ export default function Home() {
         if (gameState === 'GAME_OVER' || gameState === 'PAUSED') {
           handleRestart();
         }
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (
+          document.activeElement?.tagName !== 'INPUT' &&
+          document.activeElement?.tagName !== 'TEXTAREA'
+        ) {
+          handleToggleFullscreen();
+        }
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [gameState, isSettingsOpen, isLeaderboardOpen, isNicknameModalOpen]);
+  }, [gameState, isSettingsOpen, isLeaderboardOpen, isNicknameModalOpen, isInstructionsOpen]);
+
+  const isGameRunning = gameState !== 'TITLE';
 
   return (
-    <main className="min-h-screen bg-[#06090f] text-slate-100 flex flex-col items-center justify-between p-3 sm:p-6 lg:p-8">
-      {/* Top Header */}
-      <div className="w-full max-w-6xl flex items-center justify-between pb-4 mb-2 border-b border-slate-800/80">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
+    <>
+      {/* ============================================================== */}
+      {/* 1. MODO JOGO: EXPANDIDO AUTOMATICAMENTE PARA O TAMANHO DO NAVEGADOR */}
+      {/* ============================================================== */}
+      {isGameRunning ? (
+        <main
+          ref={containerRef}
+          className="fixed inset-0 w-screen h-screen overflow-hidden bg-[#060a11] text-slate-100 select-none z-10 flex flex-col"
+        >
+          {/* Barra Superior Integrada: delimita o topo exato da arena */}
+          <div className="w-full flex-shrink-0 z-30 px-2.5 py-2 sm:px-4 sm:py-2.5 bg-[#080d17]/95 border-b border-slate-800 shadow-md flex justify-center">
+            <div className="w-full max-w-7xl">
+              <GameHUD
+                gameState={gameState}
+                score={score}
+                highScore={highScore}
+                snakeLength={snakeLength}
+                combo={combo}
+                settings={settings}
+                playerNickname={nickname}
+                onTogglePause={handleTogglePause}
+                onRestart={handleRestart}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                onToggleSound={handleToggleSound}
+                onToggleFullscreen={handleToggleFullscreen}
+                onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+                onOpenNicknameModal={() => {
+                  setIsFirstTimeNickname(false);
+                  setIsNicknameModalOpen(true);
+                }}
+                onOpenInstructions={() => setIsInstructionsOpen(true)}
+                onGoToTitle={handleGoToTitle}
+              />
+            </div>
           </div>
-          <div>
-            <h1 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
-              <span>Snake 360°</span>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-1.5 py-0.5 rounded">
-                {APP_VERSION}
-              </span>
-            </h1>
-            <p className="text-xs text-slate-400 hidden sm:block">
-              Movimentação livre 360° no mouse · Tabela de Pontuação Global
-            </p>
+
+          {/* Arena do Jogo: Ocupa todo o espaço restante até o limite total da tela */}
+          <div className="relative flex-1 w-full h-full overflow-hidden bg-[#060a11]">
+            <SnakeCanvas
+              gameState={gameState}
+              settings={settings}
+              onGameOver={handleGameOver}
+              onScoreUpdate={handleScoreUpdate}
+            />
+
+            {/* Overlays durante a partida */}
+            {gameState === 'PAUSED' && (
+              <PauseOverlay
+                onResume={handleTogglePause}
+                onRestart={handleRestart}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                onGoToTitle={handleGoToTitle}
+              />
+            )}
+
+            {gameState === 'GAME_OVER' && lastStats && (
+              <GameOverModal
+                stats={lastStats}
+                onRestart={handleRestart}
+                onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+                onGoToTitle={handleGoToTitle}
+                isSubmittingGlobal={isSubmittingGlobal}
+                globalSubmissionResult={globalSubmissionResult}
+              />
+            )}
           </div>
-        </div>
+        </main>
+      ) : (
+        /* ============================================================== */
+        /* 2. PRIMEIRA TELA: APRESENTAÇÃO COMPLETA COM INFORMAÇÕES E GUIA */
+        /* ============================================================== */
+        <main
+          ref={containerRef}
+          className="min-h-screen bg-[#060a11] text-slate-100 flex flex-col items-center p-3 sm:p-6 md:p-8"
+        >
+          <div className="w-full max-w-6xl flex flex-col gap-5 sm:gap-6 my-auto">
+            {/* Top Bar Header com Logo, Versão e Tabela Global */}
+            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                      Snake 360°
+                    </h1>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      {APP_VERSION}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Movimentação livre 360° no mouse • Tabela de Pontuação Global
+                  </p>
+                </div>
+              </div>
 
-        <div className="flex items-center gap-4 text-xs text-slate-400 font-mono">
-          <button
-            onClick={() => setIsLeaderboardOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-colors cursor-pointer"
-          >
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span>Tabela Global</span>
-          </button>
-          <span className="text-slate-600 hidden md:inline">·</span>
-          <span className="hidden md:inline">HTML5 Canvas · 60 FPS</span>
-        </div>
-      </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsLeaderboardOpen(true)}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                >
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Tabela Global</span>
+                </button>
+                <div className="hidden md:flex items-center gap-2 text-xs font-mono text-slate-500">
+                  <span>•</span>
+                  <span>HTML5 Canvas</span>
+                  <span>•</span>
+                  <span className="text-emerald-400">60 FPS</span>
+                </div>
+              </div>
+            </header>
 
-      {/* Main Game Arena Container */}
-      <div
-        ref={containerRef}
-        className="w-full max-w-6xl flex flex-col gap-3 relative my-auto"
-      >
-        {/* Responsive HUD */}
-        <GameHUD
-          gameState={gameState}
-          score={score}
-          highScore={highScore}
-          snakeLength={snakeLength}
-          combo={combo}
-          settings={settings}
-          playerNickname={nickname}
-          onTogglePause={handleTogglePause}
-          onRestart={handleRestart}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onToggleSound={handleToggleSound}
-          onToggleFullscreen={handleToggleFullscreen}
-          onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-          onOpenNicknameModal={() => {
-            setIsFirstTimeNickname(false);
-            setIsNicknameModalOpen(true);
-          }}
-        />
-
-        {/* Canvas Gameport */}
-        <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] md:aspect-[16/9] max-h-[72vh] min-h-[420px] rounded-2xl overflow-hidden shadow-2xl border border-slate-800/90 bg-[#060a11]">
-          <SnakeCanvas
-            gameState={gameState}
-            settings={settings}
-            onGameOver={handleGameOver}
-            onScoreUpdate={handleScoreUpdate}
-          />
-
-          {/* Overlays */}
-          {gameState === 'TITLE' && (
-            <TitleScreen
+            {/* Game HUD Bar */}
+            <GameHUD
+              gameState={gameState}
+              score={score}
+              highScore={highScore}
+              snakeLength={snakeLength}
+              combo={combo}
               settings={settings}
               playerNickname={nickname}
-              onStart={handleStartGame}
+              onTogglePause={handleTogglePause}
+              onRestart={handleRestart}
               onOpenSettings={() => setIsSettingsOpen(true)}
+              onToggleSound={handleToggleSound}
+              onToggleFullscreen={handleToggleFullscreen}
               onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
               onOpenNicknameModal={() => {
                 setIsFirstTimeNickname(false);
                 setIsNicknameModalOpen(true);
               }}
-              highScore={highScore}
+              onOpenInstructions={() => setIsInstructionsOpen(true)}
             />
-          )}
 
-          {gameState === 'PAUSED' && (
-            <PauseOverlay
-              onResume={handleTogglePause}
-              onRestart={handleRestart}
-              onOpenSettings={() => setIsSettingsOpen(true)}
-            />
-          )}
+            {/* Arena Centralizada na Primeira Tela com TitleScreen */}
+            <div className="relative w-full aspect-[16/9] min-h-[380px] max-h-[560px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-[#060a11]">
+              <SnakeCanvas
+                gameState={gameState}
+                settings={settings}
+                onGameOver={handleGameOver}
+                onScoreUpdate={handleScoreUpdate}
+              />
 
-          {gameState === 'GAME_OVER' && lastStats && (
-            <GameOverModal
-              stats={lastStats}
-              onRestart={handleRestart}
-              onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-              isSubmittingGlobal={isSubmittingGlobal}
-              globalSubmissionResult={globalSubmissionResult}
-            />
-          )}
+              <TitleScreen
+                settings={settings}
+                playerNickname={nickname}
+                onStart={handleStartGame}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+                onOpenNicknameModal={() => {
+                  setIsFirstTimeNickname(false);
+                  setIsNicknameModalOpen(true);
+                }}
+                onOpenInstructions={() => setIsInstructionsOpen(true)}
+                highScore={highScore}
+              />
+            </div>
 
-          {isSettingsOpen && (
-            <SettingsModal
-              settings={settings}
-              onUpdateSettings={handleUpdateSettings}
-              onClose={() => setIsSettingsOpen(false)}
-            />
-          )}
+            {/* Painel COMO JOGAR & MECÂNICAS (Orbes, Controles, Regras) */}
+            <GameInstructions />
 
-          {/* Nickname Registration / Edit Modal */}
-          {isNicknameModalOpen && (
-            <NicknameModal
-              currentNickname={nickname}
-              isOpen={isNicknameModalOpen}
-              isFirstTime={isFirstTimeNickname}
-              onSave={handleSaveNickname}
-              onClose={() => setIsNicknameModalOpen(false)}
-            />
-          )}
+            {/* Rodapé de Informações e Atalhos */}
+            <footer className="w-full flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 font-mono pt-2 border-t border-slate-800/80">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400">&gt;_</span>
+                <span>Snake 360° {APP_VERSION} • Leaderboard em tempo real com Firebase Firestore</span>
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Atalhos: <kbd className="text-slate-300">[Espaço]</kbd> Turbo •{' '}
+                <kbd className="text-slate-300">[Esc]</kbd> Pausar •{' '}
+                <kbd className="text-slate-300">[R]</kbd> Reiniciar
+              </div>
+            </footer>
+          </div>
+        </main>
+      )}
 
-          {/* Global Leaderboard Modal */}
-          {isLeaderboardOpen && (
-            <LeaderboardModal
-              isOpen={isLeaderboardOpen}
-              onClose={() => setIsLeaderboardOpen(false)}
-              currentUserId={currentUserId}
-              currentPlayerNickname={nickname}
-            />
-          )}
-        </div>
-      </div>
+      {/* ============================================================== */}
+      {/* 3. MODAIS GLOBAIS (CONFIGURAÇÕES, RANKING, NICKNAME, INSTRUÇÕES) */}
+      {/* ============================================================== */}
+      {isSettingsOpen && (
+        <SettingsModal
+          settings={settings}
+          onUpdateSettings={handleUpdateSettings}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+      )}
 
-      {/* Bottom Instructions & Legend */}
-      <div className="w-full max-w-6xl mt-6">
-        <GameInstructions />
-      </div>
+      {isNicknameModalOpen && (
+        <NicknameModal
+          currentNickname={nickname}
+          isOpen={isNicknameModalOpen}
+          isFirstTime={isFirstTimeNickname}
+          onSave={handleSaveNickname}
+          onClose={() => setIsNicknameModalOpen(false)}
+        />
+      )}
 
-      {/* Footer */}
-      <footer className="w-full max-w-6xl mt-8 pt-4 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-        <div className="flex items-center gap-2">
-          <Terminal className="w-3.5 h-3.5 text-slate-600" />
-          <span>Snake 360° {APP_VERSION} · Leaderboard em tempo real com Firebase Firestore</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span>Atalhos: [Espaço] Turbo · [Esc] Pausar · [R] Reiniciar</span>
-        </div>
-      </footer>
-    </main>
+      {isLeaderboardOpen && (
+        <LeaderboardModal
+          isOpen={isLeaderboardOpen}
+          onClose={() => setIsLeaderboardOpen(false)}
+          currentUserId={currentUserId}
+          currentPlayerNickname={nickname}
+        />
+      )}
+
+      {isInstructionsOpen && (
+        <InstructionsModal
+          isOpen={isInstructionsOpen}
+          onClose={() => setIsInstructionsOpen(false)}
+        />
+      )}
+    </>
   );
 }

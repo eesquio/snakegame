@@ -7,12 +7,14 @@ interface PauseOverlayProps {
   onResume: () => void;
   onRestart: () => void;
   onOpenSettings: () => void;
+  onGoToTitle?: () => void;
 }
 
 export const PauseOverlay: React.FC<PauseOverlayProps> = ({
   onResume,
   onRestart,
   onOpenSettings,
+  onGoToTitle,
 }) => {
   return (
     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
@@ -20,7 +22,7 @@ export const PauseOverlay: React.FC<PauseOverlayProps> = ({
         <h3 className="text-2xl font-bold text-white mb-2">Jogo Pausado</h3>
         <p className="text-xs text-slate-400 mb-6">Pressione Esc ou o botão abaixo para continuar</p>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           <button
             onClick={onResume}
             className="py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
@@ -36,6 +38,15 @@ export const PauseOverlay: React.FC<PauseOverlayProps> = ({
             <RotateCcw className="w-4 h-4" />
             <span>Reiniciar Partida (R)</span>
           </button>
+
+          {onGoToTitle && (
+            <button
+              onClick={onGoToTitle}
+              className="py-2 px-4 bg-slate-800/60 hover:bg-slate-800 text-slate-300 font-medium text-xs rounded-xl flex items-center justify-center gap-2 border border-slate-700/50 transition-colors cursor-pointer"
+            >
+              <span>Voltar ao Menu Principal</span>
+            </button>
+          )}
 
           <button
             onClick={onOpenSettings}

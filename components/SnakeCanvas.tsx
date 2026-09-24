@@ -163,16 +163,17 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
     onScoreUpdate(0, s.segments.length, 1);
   }, [settings.themeId, settings.speedMode, onScoreUpdate, spawnOrb]);
 
-  // Handle Resize
+  // Handle Resize with ResizeObserver & Window Resize
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    if (!container) return;
+
     const handleResize = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const container = canvas.parentElement;
-      if (!container) return;
-
       const rect = container.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
       canvas.width = rect.width * dpr;
@@ -183,12 +184,31 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
       stateRef.current.width = rect.width;
       stateRef.current.height = rect.height;
 
+      // Ensure snake head stays within new boundaries
+      stateRef.current.head.x = Math.max(30, Math.min(rect.width - 30, stateRef.current.head.x));
+      stateRef.current.head.y = Math.max(30, Math.min(rect.height - 30, stateRef.current.head.y));
+
+      // Keep orbs inside new arena size
+      for (const orb of stateRef.current.orbs) {
+        orb.x = Math.max(40, Math.min(rect.width - 40, orb.x));
+        orb.y = Math.max(40, Math.min(rect.height - 40, orb.y));
+      }
+
       initDust(rect.width, rect.height);
     };
 
     handleResize();
+
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(container);
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
   }, [initDust]);
 
   // Audio Sync with Settings
@@ -879,6 +899,27 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
     stateRef.current.mouse.isDown = false;
   };
 
+  // Window-level tracking during PLAYING to keep steering smoothly even if cursor touches the top bar or edges
+  useEffect(() => {
+    if (gameState !== 'PLAYING') return;
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      updatePointerPosition(e.clientX, e.clientY);
+    };
+
+    const handleWindowMouseUp = () => {
+      stateRef.current.mouse.isDown = false;
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('mouseup', handleWindowMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, [gameState, updatePointerPosition]);
+
   // Keyboard shortcut listener (Spacebar for turbo boost)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -910,7 +951,7 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="w-full h-full block bg-[#060a11] rounded-xl shadow-2xl border border-slate-800/80 overflow-hidden"
+        className="w-full h-full block bg-[#060a11]"
       />
     </div>
   );

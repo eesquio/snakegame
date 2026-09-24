@@ -12,6 +12,8 @@ import {
   Zap,
   Trophy,
   User,
+  HelpCircle,
+  Home,
 } from 'lucide-react';
 import { GameState, GameSettings } from '@/lib/types';
 
@@ -30,6 +32,8 @@ interface GameHUDProps {
   onToggleFullscreen: () => void;
   onOpenLeaderboard: () => void;
   onOpenNicknameModal: () => void;
+  onOpenInstructions: () => void;
+  onGoToTitle?: () => void;
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -47,10 +51,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   onToggleFullscreen,
   onOpenLeaderboard,
   onOpenNicknameModal,
+  onOpenInstructions,
+  onGoToTitle,
 }) => {
 
   return (
-    <header className="w-full flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl shadow-lg text-slate-200">
+    <header className="w-full flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 bg-slate-900/85 backdrop-blur-md border border-slate-800/80 rounded-2xl shadow-xl text-slate-200">
       {/* Left: Score & High Score */}
       <div className="flex items-center gap-6">
         <div className="flex flex-col">
@@ -163,6 +169,17 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           </button>
         )}
 
+        {gameState !== 'TITLE' && onGoToTitle && (
+          <button
+            onClick={onGoToTitle}
+            title="Voltar ao Menu Principal"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Menu Principal"
+          >
+            <Home className="w-4 h-4" />
+          </button>
+        )}
+
         <button
           onClick={onRestart}
           title="Reiniciar partida (R)"
@@ -170,6 +187,15 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           aria-label="Reiniciar"
         >
           <RotateCcw className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={onOpenInstructions}
+          title="Como Jogar e Mecânicas"
+          className="p-2 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-colors"
+          aria-label="Como Jogar"
+        >
+          <HelpCircle className="w-4 h-4" />
         </button>
 
         <button

@@ -8,6 +8,7 @@ interface GameOverModalProps {
   stats: GameStats;
   onRestart: () => void;
   onOpenLeaderboard: () => void;
+  onGoToTitle?: () => void;
   isSubmittingGlobal?: boolean;
   globalSubmissionResult?: { isNewBest: boolean } | null;
 }
@@ -16,6 +17,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   stats,
   onRestart,
   onOpenLeaderboard,
+  onGoToTitle,
   isSubmittingGlobal,
   globalSubmissionResult,
 }) => {
@@ -156,22 +158,33 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </button>
           </div>
 
-          <button
-            onClick={handleShare}
-            className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Placar Copiado!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-3.5 h-3.5" />
-                <span>Copiar Placar para Amigos</span>
-              </>
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={handleShare}
+              className="flex-1 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-400">Placar Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Copiar Placar</span>
+                </>
+              )}
+            </button>
+
+            {onGoToTitle && (
+              <button
+                onClick={onGoToTitle}
+                className="py-2.5 px-4 bg-slate-850 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60 font-medium text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Menu Inicial
+              </button>
             )}
-          </button>
+          </div>
         </div>
       </div>
     </div>
