@@ -1,0 +1,6 @@
+{
+  "name": "Snake 360° - Serpente de Movimento Livre",
+  "description": "Jogo web moderno estilo Snake com movimentação livre em 360 graus no mouse, física de corpo, orbes luminosos, cadastro simples por nickname e tabela de pontuação global em tempo real via Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

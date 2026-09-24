@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /leaderboard/{playerId} {
+      // Anyone can view the public high score leaderboard
+      allow read: if true;
+      
+      // Authenticated users (including anonymous guest players) can register or update their own record
+      allow create, update: if request.auth != null 
+        && request.auth.uid == playerId
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 2
+        && request.resource.data.nickname.size() <= 24
+        && request.resource.data.score is number
+        && request.resource.data.score >= 0;
+
+      allow delete: if false;
+    }
+  }
+}
