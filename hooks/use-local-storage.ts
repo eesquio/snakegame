@@ -63,6 +63,44 @@ export function useHighScore() {
   return [highScore, setHighScore] as const;
 }
 
+export function useModeHighScore(mode: 'FOLLOW' | 'DIRECT') {
+  const getSnapshot = useCallback(() => {
+    if (typeof window === 'undefined') return 0;
+    try {
+      const modeKey = `snake_360_highscore_${mode}`;
+      const modeVal = localStorage.getItem(modeKey);
+      if (modeVal !== null) {
+        return parseInt(modeVal, 10) || 0;
+      }
+      const legacyVal = localStorage.getItem('snake_360_highscore');
+      return legacyVal ? parseInt(legacyVal, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  }, [mode]);
+
+  const highScore = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getHighScoreServerSnapshot
+  );
+
+  const setHighScore = useCallback(
+    (newScore: number) => {
+      if (typeof window === 'undefined') return;
+      try {
+        const modeKey = `snake_360_highscore_${mode}`;
+        localStorage.setItem(modeKey, newScore.toString());
+        localStorage.setItem('snake_360_highscore', newScore.toString());
+        notifyStorageChange();
+      } catch {}
+    },
+    [mode]
+  );
+
+  return [highScore, setHighScore] as const;
+}
+
 // 2. Player Nickname Hook
 function getNicknameSnapshot(): string {
   if (typeof window === 'undefined') return '';

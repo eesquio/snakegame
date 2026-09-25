@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Record for player high score in a specific game mode",
+      "type": "object",
+      "properties": {
+        "nickname": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 24,
+          "description": "Player nickname display"
+        },
+        "score": {
+          "type": "number",
+          "description": "Highest score achieved"
+        },
+        "length": {
+          "type": "number",
+          "description": "Snake length achieved"
+        },
+        "maxCombo": {
+          "type": "number",
+          "description": "Maximum combo multiplier"
+        },
+        "timeSurvivedSeconds": {
+          "type": "number",
+          "description": "Total seconds survived"
+        },
+        "themeId": {
+          "type": "string",
+          "description": "Selected snake skin/theme ID"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["FOLLOW", "DIRECT"],
+          "description": "Control mode played"
+        },
+        "snapshotUrl": {
+          "type": "string",
+          "description": "Base64 data URL of snake collision moment screenshot"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Timestamp in milliseconds"
+        }
+      },
+      "required": [
+        "nickname",
+        "score",
+        "length",
+        "maxCombo",
+        "timeSurvivedSeconds",
+        "themeId",
+        "mode",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/leaderboard_follow/{playerId}": {
+      "schema": "LeaderboardEntry",
+      "description": "Global leaderboard for Seguir Cursor (360) mode"
+    },
+    "/leaderboard_direct/{playerId}": {
+      "schema": "LeaderboardEntry",
+      "description": "Global leaderboard for Cursor Direto mode"
+    }
+  }
+}

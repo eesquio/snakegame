@@ -15,7 +15,7 @@ import {
   HelpCircle,
   Home,
 } from 'lucide-react';
-import { GameState, GameSettings } from '@/lib/types';
+import { GameState, GameSettings, ControlMode } from '@/lib/types';
 
 interface GameHUDProps {
   gameState: GameState;
@@ -30,7 +30,7 @@ interface GameHUDProps {
   onOpenSettings: () => void;
   onToggleSound: () => void;
   onToggleFullscreen: () => void;
-  onOpenLeaderboard: () => void;
+  onOpenLeaderboard: (mode?: ControlMode) => void;
   onOpenNicknameModal: () => void;
   onOpenInstructions: () => void;
   onGoToTitle?: () => void;
@@ -121,11 +121,17 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           <span className="max-w-[100px] truncate">{playerNickname || 'Jogador'}</span>
         </button>
 
+        {/* Control Mode Badge */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/60 border border-slate-700/50 text-[11px] font-mono text-slate-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>{settings.controlMode === 'DIRECT' ? 'Cursor Direto' : 'Seguir 360°'}</span>
+        </div>
+
         {/* Global Leaderboard Button */}
         <button
-          onClick={onOpenLeaderboard}
-          title="Ver Tabela Global de Pontuação"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-semibold text-amber-300 transition-colors"
+          onClick={() => onOpenLeaderboard(settings.controlMode)}
+          title="Ver Tabelas Globais de Pontuação"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-semibold text-amber-300 transition-colors cursor-pointer"
         >
           <Trophy className="w-3.5 h-3.5 text-amber-400" />
           <span className="hidden sm:inline">Ranking</span>

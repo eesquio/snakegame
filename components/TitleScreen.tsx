@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Play, Sparkles, MousePointer, Shield, Sliders, Trophy, User, HelpCircle } from 'lucide-react';
-import { GameSettings } from '@/lib/types';
+import { GameSettings, ControlMode } from '@/lib/types';
 import { SNAKE_THEMES } from '@/lib/themes';
 import { useIsMounted } from '@/hooks/use-local-storage';
 
@@ -11,7 +11,7 @@ interface TitleScreenProps {
   playerNickname: string;
   onStart: () => void;
   onOpenSettings: () => void;
-  onOpenLeaderboard: () => void;
+  onOpenLeaderboard: (mode?: ControlMode) => void;
   onOpenNicknameModal: () => void;
   onOpenInstructions: () => void;
   highScore: number;
@@ -102,7 +102,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
           <div className="grid grid-cols-3 gap-2">
             <button
-              onClick={onOpenLeaderboard}
+              onClick={() => onOpenLeaderboard(settings.controlMode)}
               className="py-2.5 px-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 border border-amber-500/30 transition-colors cursor-pointer"
             >
               <Trophy className="w-3.5 h-3.5 text-amber-400" />

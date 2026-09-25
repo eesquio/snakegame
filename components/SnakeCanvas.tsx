@@ -52,6 +52,8 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
     ambientDust: [] as Array<{ x: number; y: number; size: number; speed: number; alpha: number }>,
     lastTime: 0,
     running: false,
+    collisionOccurred: false,
+    collisionPoint: null as { x: number; y: number } | null,
   });
 
   const animFrameIdRef = useRef<number | null>(null);
@@ -125,6 +127,8 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
     s.shake = 0;
     s.boostActive = false;
     s.boostEnergy = 100;
+    s.collisionOccurred = false;
+    s.collisionPoint = null;
     s.targetLength = 22; // Start with healthy body
 
     const centerX = s.width / 2;
@@ -432,22 +436,24 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
         }
 
         // Trigger Game Over
-        if (collisionOccurred) {
+        if (collisionOccurred && !s.collisionOccurred) {
           s.shake = settings.screenShake ? 20 : 0;
           soundManager.playDie();
           soundManager.setBoosting(false);
+          s.collisionOccurred = true;
+          s.collisionPoint = { x: s.head.x, y: s.head.y };
 
           // Spawn dramatic explosion particles
-          for (let p = 0; p < 45; p++) {
+          for (let p = 0; p < 50; p++) {
             const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 6 + 1.5;
+            const speed = Math.random() * 7 + 2;
             s.particles.push({
               x: s.head.x,
               y: s.head.y,
               vx: Math.cos(angle) * speed,
               vy: Math.sin(angle) * speed,
               color: p % 2 === 0 ? '#10b981' : '#f43f5e',
-              size: Math.random() * 4 + 2,
+              size: Math.random() * 5 + 2,
               life: 0,
               maxLife: Math.random() * 0.8 + 0.4,
               alpha: 1,
@@ -461,16 +467,6 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
               localStorage.setItem('snake_360_highscore', s.score.toString());
             } catch {}
           }
-
-          onGameOver({
-            score: s.score,
-            highScore: s.highScore,
-            gemsCollected: s.gemsCollected,
-            length: s.segments.length,
-            timeSurvivedSeconds: Math.round(s.timeSurvivedSeconds),
-            maxCombo: s.maxCombo,
-          });
-          return;
         }
 
         // --- 3. ORBS INTERACTION ---
@@ -837,7 +833,90 @@ export const SnakeCanvas: React.FC<SnakeCanvasProps> = ({
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
 
-        ctx.restore();
+        // Collision Moment Effects & Automatic Screenshot Capture
+        if (s.collisionOccurred) {
+          if (s.collisionPoint) {
+            ctx.save();
+            // Glow blast at impact point
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = 24;
+            ctx.beginPath();
+            ctx.arc(s.collisionPoint.x, s.collisionPoint.y, 22, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(s.collisionPoint.x, s.collisionPoint.y, 36, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Impact Crosshair
+            ctx.beginPath();
+            ctx.moveTo(s.collisionPoint.x - 26, s.collisionPoint.y);
+            ctx.lineTo(s.collisionPoint.x + 26, s.collisionPoint.y);
+            ctx.moveTo(s.collisionPoint.x, s.collisionPoint.y - 26);
+            ctx.lineTo(s.collisionPoint.x, s.collisionPoint.y + 26);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          ctx.restore();
+
+          // Generate high quality collision snapshot showing snake size
+          let snapshotUrl = '';
+          try {
+            const thumbWidth = 600;
+            const thumbHeight = Math.round((thumbWidth / canvas.width) * canvas.height);
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = thumbWidth;
+            offCanvas.height = thumbHeight;
+            const offCtx = offCanvas.getContext('2d');
+            if (offCtx) {
+              offCtx.drawImage(canvas, 0, 0, thumbWidth, thumbHeight);
+
+              // Lower banner with snake size and points
+              offCtx.fillStyle = 'rgba(6, 10, 17, 0.88)';
+              offCtx.fillRect(0, thumbHeight - 26, thumbWidth, 26);
+
+              // Accent line on banner
+              offCtx.fillStyle = 'rgba(16, 185, 129, 0.5)';
+              offCtx.fillRect(0, thumbHeight - 26, thumbWidth, 1.5);
+
+              offCtx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+              offCtx.fillStyle = '#34d399';
+              offCtx.textAlign = 'left';
+              offCtx.fillText(`TAMANHO: ${s.segments.length} SEGMENTOS`, 12, thumbHeight - 9);
+
+              offCtx.fillStyle = '#f59e0b';
+              offCtx.textAlign = 'right';
+              offCtx.fillText(`${s.score.toLocaleString()} PTS`, thumbWidth - 12, thumbHeight - 9);
+
+              snapshotUrl = offCanvas.toDataURL('image/jpeg', 0.68);
+            } else {
+              snapshotUrl = canvas.toDataURL('image/jpeg', 0.6);
+            }
+          } catch (err) {
+            console.warn('Snapshot capture warning:', err);
+          }
+
+          onGameOver({
+            score: s.score,
+            highScore: s.highScore,
+            gemsCollected: s.gemsCollected,
+            length: s.segments.length,
+            timeSurvivedSeconds: Math.round(s.timeSurvivedSeconds),
+            maxCombo: s.maxCombo,
+            snapshotUrl,
+          });
+
+          return; // Stop animation loop on game over
+        } else {
+          ctx.restore();
+        }
       }
 
       animFrameIdRef.current = requestAnimationFrame(loop);

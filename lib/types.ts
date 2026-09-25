@@ -81,6 +81,7 @@ export interface GameStats {
   length: number;
   timeSurvivedSeconds: number;
   maxCombo: number;
+  snapshotUrl?: string;
 }
 
 export interface GameSettings {
@@ -100,6 +101,8 @@ export interface LeaderboardEntry {
   maxCombo: number;
   timeSurvivedSeconds: number;
   themeId: string;
+  mode?: ControlMode;
+  snapshotUrl?: string;
   updatedAt?: number;
 }
 

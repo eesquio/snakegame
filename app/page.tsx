@@ -11,21 +11,26 @@ import { SettingsModal } from '@/components/SettingsModal';
 import { NicknameModal } from '@/components/NicknameModal';
 import { LeaderboardModal } from '@/components/LeaderboardModal';
 import { InstructionsModal } from '@/components/InstructionsModal';
-import { GameState, GameStats } from '@/lib/types';
+import { GameState, GameStats, ControlMode } from '@/lib/types';
 import {
-  useHighScore,
+  useModeHighScore,
   useGameSettings,
   usePlayerNickname,
 } from '@/hooks/use-local-storage';
-import { ensureAnonymousAuth, submitPlayerScore } from '@/lib/firebase';
+import {
+  ensureAnonymousAuth,
+  submitPlayerScore,
+  getEffectivePlayerId,
+} from '@/lib/firebase';
 import { Sparkles, Trophy } from 'lucide-react';
 
-const APP_VERSION = 'v1.3.2';
+const APP_VERSION = 'v1.5.0';
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState>('TITLE');
   const [score, setScore] = useState<number>(0);
-  const [highScore, setHighScore] = useHighScore();
+  const [settings, handleUpdateSettings] = useGameSettings();
+  const [highScore, setHighScore] = useModeHighScore(settings.controlMode);
   const [nickname, setNickname] = usePlayerNickname();
   const [snakeLength, setSnakeLength] = useState<number>(20);
   const [combo, setCombo] = useState<number>(1);
@@ -36,23 +41,39 @@ export default function Home() {
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState<boolean>(false);
   const [isFirstTimeNickname, setIsFirstTimeNickname] = useState<boolean>(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
+  const [leaderboardActiveMode, setLeaderboardActiveMode] = useState<ControlMode>('FOLLOW');
   const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
 
   // Firebase auth & global score state
-  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [currentUserId, setCurrentUserId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return getEffectivePlayerId();
+    }
+    return '';
+  });
   const [isSubmittingGlobal, setIsSubmittingGlobal] = useState<boolean>(false);
   const [globalSubmissionResult, setGlobalSubmissionResult] = useState<{
     isNewBest: boolean;
   } | null>(null);
 
-  const [settings, handleUpdateSettings] = useGameSettings();
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const handleOpenLeaderboard = useCallback(
+    (mode?: ControlMode) => {
+      setLeaderboardActiveMode(mode || settings.controlMode);
+      setIsLeaderboardOpen(true);
+    },
+    [settings.controlMode]
+  );
 
   // Initialize Firebase Auth and check for initial Nickname registration
   useEffect(() => {
+    // Attempt Firebase auth in background (non-blocking)
     ensureAnonymousAuth()
       .then((user) => {
-        setCurrentUserId(user.uid);
+        if (user?.uid) {
+          setCurrentUserId(user.uid);
+        }
       })
       .catch((err) => {
         console.warn('Anonymous auth note:', err);
@@ -116,25 +137,26 @@ export default function Home() {
       if (stats.score > 0) {
         setIsSubmittingGlobal(true);
         const playerNick = nickname?.trim() || 'Jogador';
-        submitPlayerScore(playerNick, {
+        submitPlayerScore(playerNick, settings.controlMode, {
           score: stats.score,
           length: stats.length,
           maxCombo: stats.maxCombo,
           timeSurvivedSeconds: stats.timeSurvivedSeconds,
           themeId: settings.themeId,
+          snapshotUrl: stats.snapshotUrl,
         })
           .then((res) => {
             setGlobalSubmissionResult(res);
           })
           .catch((err) => {
-            console.warn('Score submission error:', err);
+            console.error('Score submission error:', err);
           })
           .finally(() => {
             setIsSubmittingGlobal(false);
           });
       }
     },
-    [nickname, settings.themeId, setHighScore]
+    [nickname, settings.controlMode, settings.themeId, setHighScore]
   );
 
   const handleScoreUpdate = useCallback(
@@ -229,7 +251,7 @@ export default function Home() {
                 onOpenSettings={() => setIsSettingsOpen(true)}
                 onToggleSound={handleToggleSound}
                 onToggleFullscreen={handleToggleFullscreen}
-                onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+                onOpenLeaderboard={handleOpenLeaderboard}
                 onOpenNicknameModal={() => {
                   setIsFirstTimeNickname(false);
                   setIsNicknameModalOpen(true);
@@ -262,8 +284,9 @@ export default function Home() {
             {gameState === 'GAME_OVER' && lastStats && (
               <GameOverModal
                 stats={lastStats}
+                controlMode={settings.controlMode}
                 onRestart={handleRestart}
-                onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+                onOpenLeaderboard={handleOpenLeaderboard}
                 onGoToTitle={handleGoToTitle}
                 isSubmittingGlobal={isSubmittingGlobal}
                 globalSubmissionResult={globalSubmissionResult}
@@ -303,7 +326,7 @@ export default function Home() {
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setIsLeaderboardOpen(true)}
+                  onClick={() => handleOpenLeaderboard(settings.controlMode)}
                   className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
                 >
                   <Trophy className="w-3.5 h-3.5 text-amber-400" />
@@ -332,7 +355,7 @@ export default function Home() {
               onOpenSettings={() => setIsSettingsOpen(true)}
               onToggleSound={handleToggleSound}
               onToggleFullscreen={handleToggleFullscreen}
-              onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+              onOpenLeaderboard={handleOpenLeaderboard}
               onOpenNicknameModal={() => {
                 setIsFirstTimeNickname(false);
                 setIsNicknameModalOpen(true);
@@ -354,7 +377,7 @@ export default function Home() {
                 playerNickname={nickname}
                 onStart={handleStartGame}
                 onOpenSettings={() => setIsSettingsOpen(true)}
-                onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+                onOpenLeaderboard={handleOpenLeaderboard}
                 onOpenNicknameModal={() => {
                   setIsFirstTimeNickname(false);
                   setIsNicknameModalOpen(true);
@@ -410,6 +433,7 @@ export default function Home() {
           onClose={() => setIsLeaderboardOpen(false)}
           currentUserId={currentUserId}
           currentPlayerNickname={nickname}
+          initialMode={leaderboardActiveMode}
         />
       )}
 
